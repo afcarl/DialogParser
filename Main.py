@@ -12,8 +12,8 @@ p.load_grammar_from_path("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJ
 print p.print_grammar()
 
 reader = SessionReader()
-log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log"
-#log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-04T00-26-55.log"
+#log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log"
+log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-04T00-26-55.log"
 
 reader.parse_session_log(log_path)
 sys_str_tree = reader.cur_log.get('parseTree')
@@ -23,7 +23,7 @@ terminals = sys_tree.leaves()
 reader.print_turns()
 print terminals
 
-c = p.parse(x)
+c = p.parse(terminals)
 
 p_trees = p.get_parses(False)
 
@@ -32,7 +32,8 @@ if p_trees is not None:
     print "Found " + str(len(p_trees)) + " trees."
     for idx, tree in enumerate(p_trees):
         TreeView(tree)._cframe.print_to_file('imgs/'+str(idx)+'.ps')
-        break
+        if idx > 5:
+            break
 else:
     print "No parse found!"
     p.print_chart(with_parse=False)
