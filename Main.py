@@ -23,7 +23,8 @@ terminals = sys_tree.leaves()
 reader.print_turns()
 print terminals
 
-c = p.parse(terminals)
+c = p.parse(x)
+p.print_chart()
 
 p_trees = p.get_parses(False)
 

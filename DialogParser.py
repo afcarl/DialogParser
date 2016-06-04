@@ -36,8 +36,6 @@ class DialogParser(object):
             # save rules
             self.grammar[lhs] = norm_rules
         print "load " + str(len(self.grammar)) + " rules"
-        # find all null non terminal symbols
-        self.find_all_nullable()
 
     def completer(self, s, idx):
         pos = s[2]
