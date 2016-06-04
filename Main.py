@@ -1,29 +1,30 @@
-from EarleyParser import EarleyParser
+from DialogParser import DialogParser
+from SessionReader import SessionReader
+from nltk.draw.tree import TreeView
+
 import nltk
-
-"""
-USAGE EXAMPLE
-rules = {'S':[['NP', 'VP']],
-         'NP': [['art', 'adj', 'n'], ['art', 'n'], ['adj', 'n']],
-         'VP':[['aux', 'VP'], ['v', 'NP']]}
-x = ['art', 'adj', 'n', 'aux', 'v', 'art', 'n', 'eos']
-parser = EarleyParser(rules)
-c = parser.parse(x)
-"""
-
-p = EarleyParser()
-p.load_rule_from_path("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/grammar.txt")
 
 x = ['inform-my_name', 'inform-welcome', 'request-weather', 'implicit_confirm-datetime_date',
      'request-geography_city', 'implicit_confirm-geography_city',
      'inform-weather']
-xx = [u'inform-my_name',
- u'inform-welcome',
- u'request-cambridge',
- u'cambridge_newcall',
- u'cambridge_next']
-c = p.parse(xx)
-p.print_chart()
+
+p = DialogParser()
+p.load_rule_from_path("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/grammar.txt")
+
+reader = SessionReader()
+reader.parse_session_log("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log")
+sys_str_tree = reader.cur_log.get('parseTree')
+sys_tree = nltk.Tree.fromstring(sys_str_tree)
+
+TreeView(sys_tree)._cframe.print_to_file('original.ps')
+
+terminals = sys_tree.leaves()
+print reader.print_turns()
+
+c = p.parse(terminals)
+
 p_trees = p.get_parses(False)
+print "Found " + str(len(p_trees)) + " trees."
 if p_trees is not None:
-    p_trees[1].draw()
+    for idx, tree in enumerate(p_trees):
+        TreeView(tree)._cframe.print_to_file(str(idx)+'.ps')
