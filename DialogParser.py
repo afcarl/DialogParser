@@ -8,9 +8,10 @@ class DialogParser(object):
     grammar = None
     transform_root = "TRANSFORM_ROOT"
     chart = None
+    null_set = None
     start_rule = (('S', ['START', 'eos']), 0, 0, '', 'predict')
 
-    def load_rule_from_path(self, path):
+    def load_grammar_from_path(self, path):
         f = open(path, 'rb')
         lines = f.readlines()
         f.close()
@@ -27,6 +28,9 @@ class DialogParser(object):
                 rules.append(r.strip().split(" "))
             self.grammar[lhs] = rules
         print "load " + str(len(self.grammar)) + " rules"
+        # find all null non terminal symbols
+        self.find_all_nullable()
+        print self.null_set
 
     def completer(self, s, idx):
         pos = s[2]
@@ -80,6 +84,12 @@ class DialogParser(object):
         for sr in s_rules:
             new_s = ((dot_symbol, sr), 0, idx, '', 'predict')
             self.add_to_chart(new_s, idx)
+        # for nullable recursive non terminal symbol
+        # magic completion
+        if dot_symbol in self.null_set:
+        #if DialogParser.is_recursive(dot_symbol):
+            magic_s = (s[0], s[1]+1, s[2], s[3], 'magic-predict')
+            self.add_to_chart(magic_s, idx)
 
 
     # Helpers #
@@ -97,14 +107,53 @@ class DialogParser(object):
                 parse_trees = [nltk.Tree.fromstring(t[3]) for t in self.chart[-1] if t[0][0] == 'S']
         return parse_trees
 
+    def find_all_nullable(self):
+        if self.grammar is None:
+            print "Error: call find null set before read grammmar"
+            return
+        self.null_set = set()
+        prev_size = -1
+        while prev_size != len(self.null_set):
+            for lhs, rules in self.grammar.iteritems():
+                for rhs in rules:
+                    all_null = True
+                    for token in rhs:
+                        if DialogParser.is_terminal(token):
+                            if not DialogParser.is_dummy(token):
+                                all_null = False
+                                break
+                        else:
+                            if token not in self.null_set:
+                                all_null = False
+                                break
+                    if all_null:
+                        self.null_set.add(lhs)
+                        break
+
+            prev_size = len(self.null_set)
+
+        print "Null set size is " + str(len(self.null_set))
+
+
+
+    """
+    Print methods
+    """
     def print_chart(self, with_parse=True):
         for idx, c in enumerate(self.chart):
             print idx
             for cc in c:
                 if not with_parse:
-                    print (cc[0], cc[1], cc[2], cc[4], cc[5])
+                    print (cc[0], cc[1], cc[2], cc[4])
                 else:
                     print cc
+
+    def print_grammar(self):
+        for lhs, rules in self.grammar.iteritems():
+            print lhs + " -> "
+            for r in rules:
+                print r
+            print "-------------"
 
     @staticmethod
     def is_dummy(token):
@@ -124,9 +173,13 @@ class DialogParser(object):
         return s[1] < len(s[0][1])
 
     @staticmethod
-    def is_terminal(s):
+    def is_terminal(token):
+        return token.islower()
+
+    @staticmethod
+    def dot_terminal(s):
         if DialogParser.incomplete(s):
-            return s[0][1][s[1]].islower()
+            return DialogParser.is_terminal(s[0][1][s[1]])
         else:
             return True
 
@@ -144,11 +197,12 @@ class DialogParser(object):
 
         for i in range(len(self.chart)):
             s_idx = 0
+            print i
             while s_idx < len(self.chart[i]):
                 s = self.chart[i][s_idx]
-                if self.incomplete(s) and not self.is_terminal(s):
+                if self.incomplete(s) and not self.dot_terminal(s):
                     self.predictor(s, i)
-                elif self.incomplete(s) and self.is_terminal(s):
+                elif self.incomplete(s) and self.dot_terminal(s):
                     self.scanner(s, i, norm_x)
                 else:
                     self.completer(s, i)
