@@ -138,6 +138,13 @@ class DialogParser(object):
                 print r
             print "-------------"
 
+    def print_train_set(self):
+        count = 0
+        for lhs, rules in self.grammar.iteritems():
+            if len(rules) > 1:
+                print lhs + " -> " + str(len(rules)) + " actions"
+                count += 1
+        print str(count) + " trainable dialog agency"
     """
     Main Functions
     """

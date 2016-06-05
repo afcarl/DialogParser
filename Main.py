@@ -13,6 +13,7 @@ x2 = ['inform-my_name', 'inform-welcome', 'request-weather', 'request-geography_
 
 p = DialogParser("bottom")
 p.load_grammar_from_path("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/grammar.txt")
+p.print_train_set()
 reader = SessionReader()
 log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log"
 # log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-04T00-26-55.log"
@@ -30,7 +31,7 @@ p.inc_parse(x1)
 p.print_last_chart()
 p.inc_parse(x2)
 p.print_last_chart()
-p.parse(x)
+p.parse(terminals)
 
 p_trees = p.get_parses(in_string=False)
 
