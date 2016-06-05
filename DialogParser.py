@@ -1,6 +1,7 @@
 # rule format is (LHS[RHS])
 # state is (rule, dot, pos, [parse tree so far])
 import nltk
+from Utils import Utils
 
 
 class DialogParser(object):
@@ -9,6 +10,9 @@ class DialogParser(object):
     transform_root = "TRANSFORM_ROOT"
     chart = None
     null_set = None
+    terminal_symbols = None
+    da_set = None
+    concept_set = None
     is_top_down = False
     start_rule = None
 
@@ -60,13 +64,13 @@ class DialogParser(object):
         f.close()
         print "load grammars from " + path
         self.grammar = {}
+        self.terminal_symbols = set()
         for l in lines:
             tokens = l.strip().split("->")
             lhs = tokens[0].strip()
             rhs = tokens[1].strip()
             rhs_rules = rhs.split("|")
 
-            rules = []
             norm_rules = []
             for r in rhs_rules:
                 tokens = r.strip().split(" ")
@@ -74,19 +78,29 @@ class DialogParser(object):
                 for idx, t in enumerate(tokens):
                     if DialogParser.is_terminal(t) and DialogParser.expect_input(t):
                         norm_tokens.insert(idx+1, self.transform_root)
+                    if DialogParser.is_terminal(t):
+                        self.terminal_symbols.add(t)
                 norm_rules.append(norm_tokens)
-                rules.append(tokens)
             # save rules
             self.grammar[lhs] = norm_rules
         print "load " + str(len(self.grammar)) + " rules"
 
+        # calculate da set and concept lexicon
+        da_temp = set()
+        concept_temp = set()
+        for t in self.terminal_symbols:
+            tokens = t.split("-")
+            if not DialogParser.is_dummy(tokens[0]):
+                da_temp.add(tokens[0])
+                if len(tokens) > 1:
+                    concept_temp.add(tokens[1])
+
+        self.da_set = sorted(list(da_temp))
+        self.concept_set = sorted(list(concept_temp))
+
     """
     Helper
     """
-    def rev_replace(self, s, old, new, occurrence):
-        li = s.rsplit(old, occurrence)
-        return new.join(li)
-
     def add_to_chart(self, new_s, idx):
         if new_s not in self.chart[idx]:
             self.chart[idx].append(new_s)
@@ -103,14 +117,58 @@ class DialogParser(object):
                 parse_trees = [nltk.Tree.fromstring(t[self.PARSE]) for t in self.chart[-1] if t[self.RULE][self.LHS] == 'S']
         return parse_trees
 
+    def decode_terminal(self, code):
+        tokens = code.split('-')
+        if tokens[0].isdigit():
+            da_idx = int(tokens[0])
+        else:
+            return None
+
+        if len(tokens) > 1 and tokens[1].isdigit():
+            c_idx = int(tokens[1])
+        else:
+            c_idx = None
+
+        if da_idx < 0 or da_idx >= len(self.da_set):
+            return None
+        if c_idx is not None:
+            if c_idx < 0 or c_idx >= len(self.concept_set):
+                return None
+
+        if c_idx is None:
+            result = self.da_set[da_idx]
+        else:
+            result = "-".join([self.da_set[da_idx], self.concept_set[c_idx]])
+
+        if result in self.terminal_symbols:
+            return result
+        else:
+            return None
+
+    def encode_terminal(self, terminal):
+        tokens = terminal.split('-')
+        if len(tokens) < 2:
+            return str(self.da_set.index(tokens[0]))
+        return '-'.join([str(self.da_set.index(tokens[0])),
+                         str(self.concept_set.index(tokens[1]))])
+
     """
     Print methods
     """
+    def print_terminal_set(self):
+        print str(len(self.terminal_symbols)) + " terminal symbols"
+        for idx, da in enumerate(self.da_set):
+            print da + "(" + str(idx) + ")",
+        print
+        for idx, c in enumerate(self.concept_set):
+            print c + "(" + str(idx) + ")",
+        print
+
     def print_last_chart(self):
         print len(self.chart)
         c = self.chart[-1]
         for cc in c:
-            if (self.is_top_down and  cc[self.RULE][self.LHS] == "START") or \
+            if (self.is_top_down and cc[self.RULE][self.LHS] == "START") or \
                     (not self.is_top_down and cc[self.RULE][self.LHS] == "S"):
                 print cc
 
@@ -174,7 +232,7 @@ class DialogParser(object):
                         parse_symbol = ss[self.PARSE]
                         if DialogParser.is_recursive(lhs) and parse_symbol.count(lhs) > 1:
                             parse = parse[1:-1].replace(lhs, "")
-                        parse_symbol = self.rev_replace(parse_symbol, lhs, parse, 1)
+                        parse_symbol = Utils.rev_replace(parse_symbol, lhs, parse, 1)
                     else:
                         if DialogParser.is_recursive(lhs) and lhs == ss_lhs:
                             parse_symbol = ss[self.PARSE] + parse.strip()
@@ -293,5 +351,14 @@ class DialogParser(object):
                 if not ever_updated and updated:
                     ever_updated = True
                 stable = not ever_updated
-        return self.chart
+
+        # return all parses
+        last_c = self.chart[-1]
+        parses = []
+        for cc in last_c:
+            if (self.is_top_down and cc[self.RULE][self.LHS] == "START") or \
+                        (not self.is_top_down and cc[self.RULE][self.LHS] == "S"):
+                    parses.append(cc[self.PARSE])
+        return parses
+
 
