@@ -83,6 +83,10 @@ class DialogParser(object):
     """
     Helper
     """
+    def rev_replace(self, s, old, new, occurrence):
+        li = s.rsplit(old, occurrence)
+        return new.join(li)
+
     def add_to_chart(self, new_s, idx):
         if new_s not in self.chart[idx]:
             self.chart[idx].append(new_s)
@@ -106,7 +110,8 @@ class DialogParser(object):
         print len(self.chart)
         c = self.chart[-1]
         for cc in c:
-            if cc[self.RULE][self.LHS] == "START":
+            if (self.is_top_down and  cc[self.RULE][self.LHS] == "START") or \
+                    (not self.is_top_down and cc[self.RULE][self.LHS] == "S"):
                 print cc
 
     def print_chart(self, with_parse=True):
@@ -149,7 +154,6 @@ class DialogParser(object):
     def completer(self, s, idx):
         c = self.chart[s[self.POS]]
         lhs = s[self.RULE][self.LHS]
-        rhs = s[self.RULE][self.RHS]
         parse = s[self.PARSE]
         modified = False
 
@@ -161,7 +165,9 @@ class DialogParser(object):
                 if dot_symbol == lhs:
                     if self.is_top_down:
                         parse_symbol = ss[self.PARSE]
-                        parse_symbol = parse_symbol.replace(lhs, parse)
+                        if DialogParser.is_recursive(lhs) and parse_symbol.count(lhs) > 1:
+                            parse = parse[1:-1].replace(lhs, "")
+                        parse_symbol = self.rev_replace(parse_symbol, lhs, parse, 1)
                     else:
                         if DialogParser.is_recursive(lhs) and lhs == ss_lhs:
                             parse_symbol = ss[self.PARSE] + parse.strip()

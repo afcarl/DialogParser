@@ -7,11 +7,11 @@ import nltk
 x = ['inform-my_name', 'inform-welcome', 'request-weather',
      'request-geography_city', 'implicit_confirm-geography_city', 'explicit_confirm-datetime_date', 'inform-weather']
 
-x0 = ['inform-my_name', 'inform-welcome', 'request-weather']
+x0 = ['inform-my_name', 'inform-welcome', 'request-weather', 'request-weather']
 x1 = ['inform-my_name', 'inform-welcome', 'request-weather', 'explicit_confirm-geography_city']
 x2 = ['inform-my_name', 'inform-welcome', 'request-weather', 'request-geography_city']
 
-p = DialogParser("top_down")
+p = DialogParser("bottom")
 p.load_grammar_from_path("/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/grammar.txt")
 reader = SessionReader()
 log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log"
@@ -32,9 +32,9 @@ p.inc_parse(x2)
 p.print_last_chart()
 p.parse(x)
 
-exit()
 p_trees = p.get_parses(in_string=False)
 
+exit()
 if p_trees is not None:
     TreeView(sys_tree)._cframe.print_to_file('imgs/original.ps')
     print "Found " + str(len(p_trees)) + " trees."
