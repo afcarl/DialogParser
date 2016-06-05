@@ -16,11 +16,13 @@ class SessionReader(object):
         self.cur_log = log
         self.cur_path = path
 
-    def print_turns(self):
+    def print_meta(self):
         print "User ID: " + self.cur_log.get("id")
+        print "Number of turns: " + str(len(self.cur_log.get('turns')))
+
+    def print_turns(self):
+        self.print_meta()
         turns = self.cur_log.get('turns')
-        print "Number of turns: " + str(len(turns))
-        print "########"
         for t in turns:
             sys_utt = t.get('sysUtt').split("\n")
             print "sys: ",
@@ -32,4 +34,4 @@ class SessionReader(object):
             if usr_utt is None:
                 usr_utt = ""
             print "usr: " + usr_utt
-        print "########"
+        print "## END OF DIALOG ##"
