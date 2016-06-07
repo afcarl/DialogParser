@@ -15,6 +15,7 @@ class DialogParser(object):
     concept_set = None
     is_top_down = False
     start_rule = None
+    train_set = None
 
     RULE = 0
     DOT = 1
@@ -97,6 +98,12 @@ class DialogParser(object):
 
         self.da_set = sorted(list(da_temp))
         self.concept_set = sorted(list(concept_temp))
+
+        # calculate the train set
+        self.train_set = {}
+        for lhs, rules in self.grammar.iteritems():
+            if len(rules) > 1:
+                self.train_set[lhs] = rules
 
     """
     Helper
@@ -197,12 +204,10 @@ class DialogParser(object):
             print "-------------"
 
     def print_train_set(self):
-        count = 0
-        for lhs, rules in self.grammar.iteritems():
-            if len(rules) > 1:
-                print lhs + " -> " + str(len(rules)) + " actions"
-                count += 1
-        print str(count) + " trainable dialog agency"
+        for lhs, rules in self.train_set.iteritems():
+            print lhs + " -> " + str(len(rules)) + " actions"
+            print rules
+        print str(len(self.train_set)) + " trainable dialog agency"
     """
     Main Functions
     """

@@ -1,7 +1,5 @@
 import json
-import re
 from Utils import Utils
-from nltk import Tree
 
 
 class SessionReader(object):
@@ -53,6 +51,14 @@ class SessionReader(object):
         prefix = parse[0:end_idx]
 
         return prefix, terminals
+
+    def get_sys_utt(self, turn):
+        sys_utt = turn.get(self.SYS_UTT)
+        result = []
+        for utt in sys_utt:
+            tags = utt.get(self.TAG).split(" ")
+            result += tags
+        return result
 
     """
     printers

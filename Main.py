@@ -7,8 +7,8 @@ import nltk
 x = ['inform-my_name', 'inform-welcome', 'request-weather',
      'request-geography_city', 'implicit_confirm-geography_city', 'explicit_confirm-datetime_date', 'inform-weather']
 
-x0 = ['inform-my_name', 'inform-welcome', 'request-weather', 'request-weather']
-x1 = ['inform-my_name', 'inform-welcome', 'request-weather', 'explicit_confirm-geography_city']
+x0 = ['inform-my_name', 'inform-welcome', 'request-weather']
+x1 = ['inform-my_name', 'inform-welcome', 'request-weather', 'explicit_confirm-datetime_date']
 x2 = ['inform-my_name', 'inform-welcome', 'request-weather', 'request-geography_city']
 
 p = DialogParser("bottom")
@@ -17,6 +17,7 @@ p.print_train_set()
 reader = SessionReader()
 log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-03T22-05-21.log"
 # log_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/sessions/11001D2016-06-04T00-26-55.log"
+log_path = "data/11001D2016-06-04T23-21-10.log"
 
 reader.parse_session_log(log_path)
 sys_str_tree = reader.cur_log.get('parseTree')
