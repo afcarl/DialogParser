@@ -145,7 +145,7 @@ class LogEditor(object):
                                 done = True
 
             print "finish labelling for " + file_name
-            ann_writer.dump_pkl(self.log_dir + file_name)
+            ann_writer.dump(self.log_dir + file_name)
         print "Done!"
 
 editor = LogEditor()
