@@ -4,10 +4,13 @@ from Utils import Utils
 
 class SessionReader(object):
     # dictionary KEY
+    ID = 'id'
     PARSE = 'parseTree'
     TURNS = 'turns'
     SYS_UTT = 'sysUtt'
+    USR_UTT = 'usrUtt'
     TAG = 'tag'
+    BELIEF = 'beliefState'
 
     # the log that is currently red
     cur_log = None
@@ -65,7 +68,7 @@ class SessionReader(object):
     """
 
     def print_meta(self):
-        print "User ID: " + self.cur_log.get("id")
+        print "User ID: " + self.cur_log.get(self.ID)
         print "Number of turns: " + str(len(self.cur_log.get(self.TURNS)))
 
     def print_turns(self, up_to=None):
@@ -80,7 +83,7 @@ class SessionReader(object):
             for utt in sys_utt:
                 print utt.get('utterance'),
             print
-            usr_utt = t.get('usrUtt')
+            usr_utt = t.get(self.USR_UTT)
             if usr_utt is None:
                 usr_utt = ""
             print "usr: " + usr_utt

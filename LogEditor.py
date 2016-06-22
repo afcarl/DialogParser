@@ -5,12 +5,14 @@ import os
 from Utils import Utils
 from nltk import Tree
 
+
 class LogEditor(object):
     line_len = 150
     session_reader = None
     parser = None
     log_files = None
-    log_dir = '/Users/Tony/Documents/intelliJWorkSpace/DialogParser/data/'
+    log_dir = 'data/'
+    label_dir = log_dir + 'labels/'
     grammar_path = "/Users/Tony/Documents/intellIJWorkSpace/HRL-RavenClawJava/log/grammar.txt"
 
     pruned_subtree = '(MISUNDERSTAND_ROOT (MISUNDERSTAND_CHOICE-geography_city epsilon pop)' \
@@ -45,7 +47,7 @@ class LogEditor(object):
 
     def filter_parses(self, prefix, parses):
         print str(len(parses)) + " tree(s) found"
-        return [p for p in parses if Utils.clean_parse(p).startswith(prefix) and self.pruned_subtree not in p]
+        return [p for p in parses if Utils.clean_parse(p).startswith(prefix) and self.pruned_subtree not in p[len(prefix):]]
 
     def is_valid_action(self, decode):
         if len(decode) <= 0:
@@ -55,26 +57,28 @@ class LogEditor(object):
         correct_input[-1] = True
         return correct_input == needs_input
 
-    def get_label(self, decode, parse, prefix_ts):
+    def get_label(self, decode, parse, prefix_ts, usr_utt, belief):
         p = []
         train = []
         selected_tree = Tree.fromstring(parse)
         self.infer_decisions(tree=selected_tree, train_list=train, parse=p, prefix_terminals=list(prefix_ts))
-        return {'actions': decode, 'train': train, 'new': True}
+        return {'actions': decode, 'train': train, 'usrUtt':usr_utt, 'belief': belief, 'new': True}
 
     def run(self):
         for file_name in self.log_files:
+            file_name = '945887D2016-06-21T20-52-31.log'
             self.session_reader.parse_session_log(self.log_dir+file_name)
             self.session_reader.print_meta()
-            turns = self.session_reader.cur_log.get("turns")
+            turns = self.session_reader.cur_log.get(self.session_reader.TURNS)
             ann_writer = AnnotationWriter(self.session_reader.cur_log['id'], len(turns))
+            self.session_reader.print_turns()
 
-            for t in turns[1:]:
-                idx = t.get("idx")
+            for turn in turns[1:]:
+                idx = turn.get("idx")
                 print "="*self.line_len
                 self.session_reader.print_turns(up_to=idx)
                 print "-"*self.line_len
-                self.session_reader.print_sys_utt(t, self.parser)
+                self.session_reader.print_sys_utt(turn, self.parser)
                 print "-"*self.line_len
                 self.parser.print_terminal_set()
                 print "="*self.line_len
@@ -89,6 +93,8 @@ class LogEditor(object):
                     (prefix_parse, prefix_ts) = self.session_reader.get_partial_parse(up_to=idx)
                     select_parse = None
                     error = False
+                    usr_utt = turn.get(self.session_reader.USR_UTT)
+                    belief = turn.get(self.session_reader.BELIEF)
 
                     if response.lower() == "ok":
                         # get the original parse tree for training
@@ -140,13 +146,15 @@ class LogEditor(object):
                         while confirm not in ['y', 'n']:
                             confirm = raw_input("Are you sure? [y/n] \n")
                             if confirm == "y":
-                                label = self.get_label(correct_actions, select_parse, prefix_ts)
+                                label = self.get_label(decode=correct_actions, parse=select_parse,
+                                                       prefix_ts=prefix_ts, usr_utt=usr_utt, belief=belief)
                                 ann_writer.set_annotation(turn_id=idx, labels=label)
                                 done = True
 
             print "finish labelling for " + file_name
-            ann_writer.dump(self.log_dir + file_name)
+            ann_writer.dump(self.label_dir + file_name)
         print "Done!"
 
 editor = LogEditor()
+editor.parser.print_terminal_set()
 editor.run()
