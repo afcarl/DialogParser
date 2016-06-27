@@ -34,6 +34,3 @@ class Utils(object):
         norm_parse = re.sub('\( +', '(', norm_parse)
         norm_parse = re.sub(' +\)', ')', norm_parse)
         return norm_parse
-
-#print Utils.resolve_unbalanced_parse('()))')
-#print Utils.resolve_unbalanced_parse('((()')

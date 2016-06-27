@@ -9,6 +9,8 @@ class SessionReader(object):
     TURNS = 'turns'
     SYS_UTT = 'sysUtt'
     USR_UTT = 'usrUtt'
+    USR_NLU = 'usrNLU'
+    ENTITIES = 'entities'
     TAG = 'tag'
     BELIEF = 'beliefState'
 
@@ -17,6 +19,11 @@ class SessionReader(object):
     cur_path = None
 
     def parse_session_log(self, path):
+        """
+        Given a path, read the file and populate the cur_log
+        :param path:
+        :return:
+        """
         # open file
         f = open(path, 'rb')
         log = json.load(f)
@@ -28,15 +35,23 @@ class SessionReader(object):
         norm_turns = list(turns)
         for idx, t in enumerate(turns):
             sys_utt = t.get(self.SYS_UTT).split("\n")
+            entities = json.loads(t.get(self.USR_NLU)).get(self.ENTITIES) if t.get(self.USR_NLU) is not None else []
             norm_sys_utt = []
             for utt in sys_utt:
                 norm_sys_utt.append(json.loads(utt))
             norm_turns[idx][self.SYS_UTT] = norm_sys_utt
+            norm_turns[idx][self.ENTITIES] = entities
+
         self.cur_log[self.TURNS] = norm_turns
         # remove white space in parse tree
         self.cur_log[self.PARSE] = Utils.clean_parse(self.cur_log.get(self.PARSE))
 
     def get_partial_parse(self, up_to=None):
+        """
+        return the prefix of parse tree and terminal actions up to turn "up to"
+        :param up_to: if None, then the entire dialog
+        :return: prefix, termianls
+        """
         turns = self.cur_log.get(self.TURNS)
         parse = self.cur_log.get(self.PARSE)
         end_turn = len(turns)
@@ -56,6 +71,10 @@ class SessionReader(object):
         return prefix, terminals
 
     def get_sys_utt(self, turn):
+        """
+        :param turn: the turn index
+        :return: the system utterance in a string
+        """
         sys_utt = turn.get(self.SYS_UTT)
         result = []
         for utt in sys_utt:

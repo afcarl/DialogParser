@@ -33,7 +33,9 @@ class DialogParser(object):
     @staticmethod
     def expect_input(token):
         extra_set = ['ask_repeat', 'ask_rephrase']
-        return 'request' in token or 'explicit_confirm' in token or token in extra_set
+        return 'request' in token \
+               or 'explicit_confirm' in token \
+               or token in extra_set or "newcall" in token or "next" in token
 
     @staticmethod
     def is_recursive(token):
@@ -60,9 +62,14 @@ class DialogParser(object):
             return True
 
     def load_grammar_from_path(self, path):
+        """
+        :param path: the grammar path
+        :return: populate the grammar of parser
+        """
         f = open(path, 'rb')
         lines = f.readlines()
         f.close()
+
         print "load grammars from " + path
         self.grammar = {}
         self.terminal_symbols = set()
@@ -208,10 +215,10 @@ class DialogParser(object):
             print lhs + " -> " + str(len(rules)) + " actions"
             print rules
         print str(len(self.train_set)) + " trainable dialog agency"
+
     """
     Main Functions
     """
-
     def __init__(self, parse_type):
         super(DialogParser, self).__init__()
         if parse_type == "top_down":
